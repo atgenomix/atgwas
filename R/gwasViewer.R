@@ -5,7 +5,7 @@
 #' @import oncoexpr
 #' @import sparklyr
 #' @import DBI
-
+#' @import shinycssloaders
 gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect", version = "3.5") {
 
     ui <- fluidPage(
@@ -18,9 +18,9 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         ),
         mainPanel(
           tabsetPanel(
-            tabPanel("Table", DTOutput("table")),
-            tabPanel("Manhattan", plotOutput("manhattan")),
-            tabPanel("QQ Plot", plotOutput("qqplot"))
+            tabPanel("Table", shinycssloaders::withSpinner(DTOutput("table"))),
+            tabPanel("Manhattan", shinycssloaders::withSpinner(plotOutput("manhattan"))),
+            tabPanel("QQ Plot", shinycssloaders::withSpinner(plotOutput("qqplot")))
           )
         )
       )
