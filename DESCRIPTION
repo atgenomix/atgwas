@@ -1,12 +1,15 @@
 Package: atgwas
-Title: GWAS Analysis
+Title: Interactive GWAS result viewer for Spark databases
 Version: 1.0.0.9000
 Authors@R: 
     person("charles", "chuang", 
            email = "charles.chuang@atgenomix.com", 
            role = c("aut", "cre"), 
            comment = c(ORCID = "https://orcid.org/0000-0002-4571-3608"))
-Description: GWAS browser
+Description:   
+    Provides a Shiny application to browse GWAS association results stored
+    in Spark catalogs. Supports dynamic database selection, interactive
+    Manhattan and QQ plots, and tabular display of filtered summary metrics.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
