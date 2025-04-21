@@ -38,5 +38,3 @@ Imports:
     shinycssloaders (>= 1.1.0),
     shinyjs (>= 2.1.0),
     qqman (>= 0.1.9)
-Remotes:
-    atgenomix/oncoexpr
