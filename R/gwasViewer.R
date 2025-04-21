@@ -11,8 +11,6 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       titlePanel("GWAS Results Viewer"),
       sidebarLayout(
         sidebarPanel(
-          # fileInput("file", "Choose GWAS .assoc file",
-          #           accept = c(".txt", ".assoc", ".assoc.logistic", ".csv"))
           dbBrowserUI("dbBrowser1")
         ),
         mainPanel(
