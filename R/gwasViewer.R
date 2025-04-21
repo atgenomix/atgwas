@@ -2,7 +2,9 @@
 #' @import shiny
 #' @import qqman
 #' @import DT 
-
+#' @import oncoexpr
+#' @import sparklyr
+#' @import DBI
 
 gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect", version = "3.5") {
 
@@ -10,8 +12,9 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       titlePanel("GWAS Results Viewer"),
       sidebarLayout(
         sidebarPanel(
-          fileInput("file", "Choose GWAS .assoc file",
-                    accept = c(".txt", ".assoc", ".assoc.logistic", ".csv"))
+          # fileInput("file", "Choose GWAS .assoc file",
+          #           accept = c(".txt", ".assoc", ".assoc.logistic", ".csv"))
+          oncoexpr::dbBrowserUI("dbBrowser1")
         ),
         mainPanel(
           tabsetPanel(
@@ -24,25 +27,39 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
     )
 
     server <- function(input, output, session) {
+       sc <- sparklyr::spark_connect(master = master, method = method, version = version)
+       db_info <- oncoexpr::dbBrowserServer("dbBrowser1", sc)
+
+
+      session$onSessionEnded(function() {
+        if (!is.null(sc)) {
+          sparklyr::spark_disconnect(sc)
+          message("Spark connection disconnected.")
+        }
+      })
+
       # Reactive expression to read uploaded data
       gwas_data <- reactive({
-        req(input$file)
-        df <- read.table(input$file$datapath, header = TRUE, stringsAsFactors = FALSE)
-        # Filter for additive model if present
-        if ("TEST" %in% colnames(df)) {
-          df <- subset(df, TEST == "ADD")
-        }
-        # Remove non-finite or invalid p-values
-        if ("P" %in% colnames(df)) {
-          df <- df[is.finite(df$P) & df$P > 0 & df$P <= 1, ]
-        }
+        req(db_info$selected_db())
+        print(1)
+        sel_db <- db_info$selected_db()
+        DBI::dbExecute(sc, paste0("USE ", sel_db))
+        selected_db_name <- db_info$selected_db()
+        tables <- DBI::dbListTables(sc)
+        print(tables)
+        req(length(tables) > 0, "No tables found in ", sel_db)
+        tbl_name <- tables[1]
+        tbl_name <- "output_gwas_results_delta_740715742"
+        df <- DBI::dbGetQuery(sc, paste0("SELECT * FROM ", tbl_name))
+        df$"P" <- as.numeric(df$"P")
         df
       })
 
       # Render data table
       output$table <- renderDT({
+        req(gwas_data())
         gwas_data()
-      }, options = list(pageLength = 10))
+      }, options = list(pageLength = 20))
 
       # Render Manhattan plot
       output$manhattan <- renderPlot({
@@ -85,6 +102,9 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         )
         abline(0, 1, col = "red")
       })
+
+      outputOptions(output, "manhattan", suspendWhenHidden = FALSE)
+      outputOptions(output, "qqplot", suspendWhenHidden = FALSE)
     }
 
     # Launch Shiny app
