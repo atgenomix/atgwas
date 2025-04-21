@@ -2,6 +2,7 @@
 
 export(dbBrowserServer)
 export(dbBrowserUI)
+export(gwasViewer)
 export(sparkConnectionServer)
 export(sparkConnectionUI)
 import(DBI)
