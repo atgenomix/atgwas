@@ -18,7 +18,7 @@
 gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect", version = "3.5") {
 
     ui <- fluidPage(
-      titlePanel("ATGWAS"),
+      titlePanel("GWAS Viewer"),
       sidebarLayout(
         sidebarPanel(
           dbBrowserUI("dbBrowser1")
