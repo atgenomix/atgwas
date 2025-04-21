@@ -5,10 +5,20 @@
 #' @import sparklyr
 #' @import DBI
 #' @import shinycssloaders
+#' 
+#' @title ATGWAS
+#' @description 
+#' Launches a Shiny application for interactive exploration of GWAS summary results 
+#' stored in a Spark catalog. Provides an interactive table, Manhattan plot, and QQ plot.
+#' @param master String specifying the Spark master endpoint (e.g., \code{"sc://host:port"} or \code{"local"}).
+#' @param method String indicating the connection method passed to \code{sparklyr::spark_connect()} (e.g., \code{"shell"} or \code{"spark_connect"}).
+#' @param version String specifying the Spark version to use (default \code{"3.5"}).
+#' @return Invisibly returns the Shiny application object after launching it with \code{runApp()}.
+#' @export
 gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect", version = "3.5") {
 
     ui <- fluidPage(
-      titlePanel("GWAS Results Viewer"),
+      titlePanel("ATGWAS"),
       sidebarLayout(
         sidebarPanel(
           dbBrowserUI("dbBrowser1")
