@@ -26,8 +26,8 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         mainPanel(
           tabsetPanel(
             tabPanel("Table", shinycssloaders::withSpinner(DTOutput("table"))),
-            tabPanel("Manhattan", shinycssloaders::withSpinner(plotOutput("manhattan"))),
-            tabPanel("QQ Plot", shinycssloaders::withSpinner(plotOutput("qqplot")))
+            tabPanel("QQ Plot", shinycssloaders::withSpinner(plotOutput("qqplot"))),
+            tabPanel("Manhattan", shinycssloaders::withSpinner(plotOutput("manhattan")))
           )
         )
       )
