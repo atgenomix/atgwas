@@ -21,6 +21,9 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       titlePanel("GWAS Viewer"),
       sidebarLayout(
         sidebarPanel(
+          sliderInput("genomewideline", "genomewide threshold:", min = 0, max = 10, value = -log10(5e-8), step = 0.1),
+          sliderInput("suggestiveline", "suggestive threshold:", min = 0, max = 10, value = -log10(1e-5), step = 0.1)
+
           dbBrowserUI("dbBrowser1")
         ),
         mainPanel(
@@ -82,8 +85,10 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
           p   = "P",
           snp = if ("SNP" %in% names(dat)) "SNP" else NULL,
           col = c("gray30", "gray60"),
-          genomewideline = -log10(5e-8),
-          suggestiveline  = -log10(1e-5),
+          genomewideline = input$genomewideline,
+          suggestiveline = input$suggestiveline,
+          #genomewideline = -log10(5e-8),
+          #suggestiveline  = -log10(1e-5),
           main = "GWAS Manhattan Plot",
           ylim = c(0, max(-log10(dat$P), na.rm = TRUE) * 1.05 + 4)
         )
