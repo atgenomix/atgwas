@@ -56,7 +56,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         print(tables)
         req(length(tables) > 0, "No tables found in ", sel_db)
         tbl_name <- tables[1]
-        tbl_name <- "output_gwas_results_delta_740715742"
+        #tbl_name <- "output_gwas_results_delta_740715742"
         df <- DBI::dbGetQuery(sc, paste0("SELECT * FROM ", tbl_name))
         df$"P" <- as.numeric(df$"P")
         df
