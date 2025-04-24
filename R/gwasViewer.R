@@ -85,7 +85,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
           genomewideline = -log10(5e-8),
           suggestiveline  = -log10(1e-5),
           main = "GWAS Manhattan Plot",
-          ylim = c(0, max(-log10(dat$P), na.rm = TRUE) * 1.05)
+          ylim = c(0, max(-log10(dat$P), na.rm = TRUE) * 1.05 + 4)
         )
       })
 
