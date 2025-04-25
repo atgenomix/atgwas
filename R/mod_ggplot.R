@@ -72,49 +72,6 @@ plot_manhattan <- function(df,
 }
 
 
-
-plot_manhattan_bg <- function(df, chr_col = "CHR", bp_col = "BP", p_col = "P") {
-    df2 <- df %>%
-      mutate(
-        CHR = as.numeric(.data[[chr_col]]),
-        BP  = as.numeric(.data[[bp_col]]),
-        P   = as.numeric(.data[[p_col]])
-      ) %>%
-      filter(!is.na(P))
-    chr_info <- df2 %>%
-      group_by(chr = CHR) %>%
-      summarise(chr_len = max(BP, na.rm = TRUE), .groups = "drop") %>%
-      arrange(chr) %>%
-      mutate(cum_start = cumsum(lag(chr_len, default = 0)))
-    df2 <- df2 %>%
-      left_join(chr_info %>% select(chr, cum_start),
-                by = c("CHR" = "chr")) %>%
-      arrange(CHR, BP) %>%
-      mutate(pos_cum = BP + cum_start)
-    axis_df <- df2 %>%
-      group_by(CHR) %>%
-      summarise(center = (min(pos_cum) + max(pos_cum)) / 2, .groups = "drop")
-    ggplot(df2, aes(x = pos_cum, y = -log10(P),
-                    color = as.factor(CHR),
-                    text  = tooltip)) +
-      geom_point(alpha = 0.6, size = 1) +
-      scale_x_continuous(breaks = axis_df$center,
-                         labels = axis_df$CHR) +
-      scale_y_continuous(expand = c(0, 0)) +
-      labs(
-        x     = "Chromosome",
-        y     = "-log10(P)",
-        title = "GWAS Manhattan Plot"
-      ) +
-      theme_bw() +
-      theme(
-        legend.position    = "none",
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
-      )
-  }
-
-
 #' @title Prepare Data for GWAS Manhattan Plot
 #' @description Processes a GWAS result data frame to compute cumulative SNP positions, 
 #'              -log10(p-values), and interactive tooltips, as well as axis breaks and plotting ranges 

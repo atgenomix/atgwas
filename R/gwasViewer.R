@@ -67,7 +67,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       if ("P" %in% colnames(df)) {
         df <- df[is.finite(df$P) & df$P > 0 & df$P <= 1, ]
       }
-      df
+      df[sample(nrow(df), 100000), ]  
     })
     # gwas_data <- reactive({
     #   req(db_info$selected_db())
@@ -86,106 +86,91 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       gwas_data()
     }, options = list(pageLength = 20))
 
-    # Preprocess and cache interactive plot data
-    base_data <- reactiveVal(NULL)
-    observeEvent(gwas_data(), {
-      dat <- gwas_data()
-      req(dat$CHR, dat$BP, dat$P)
-      dat$CHR <- as.numeric(as.character(dat$CHR))
-      dat <- dat[!is.na(dat$CHR) & is.finite(dat$BP), ]
-      dat$logP <- -log10(dat$P)
-      dat <- dat[order(dat$CHR, dat$BP), ]
-      dat$pos <- ave(dat$BP, dat$CHR, FUN = function(x) seq_along(x))
-      dat$tooltip <- paste0(
-        "CHR: ", dat$CHR,
-        "<br>BP: ", dat$BP,
-        "<br>P: ", signif(dat$P, 3),
-        if ("SNP" %in% names(dat)) paste0("<br>SNP: ", dat$SNP) else ""
-      )
-      base_data(dat)
-    })
 
+    manh_data <- reactive({
+      req(gwas_data())
+      prep_manhattan(gwas_data())
+    })
     output$manhattan <- renderPlotly({
-      dat <- base_data()
-      req(dat)
-      dat <- dat
+        info    <- manh_data()
+        df2     <- info$df
+        axis_df <- info$axis_df
+        y_max_auto <- max(
+          info$yrange[2], 
+          input$genomewideline, 
+          input$suggestiveline
+        ) + 2
 
-      # separate sig vs non-sig
-      sig    <- dat[dat$logP >= input$genomewideline, ]
-      nonsig <- dat[dat$logP <  input$genomewideline, ]
+        print(y_max_auto )
+        # 取出所有染色體、並指定交替顏色
+        chr_list <- axis_df$chr
+        palette_25 <- rainbow(25)
+        colors     <- palette_25[1:length(chr_list)]
 
-      xrange <- range(dat$pos, na.rm = TRUE)
-      yrange <- c(0, max(dat$logP, na.rm = TRUE) * 1.05 + 2)
+        # 對每一筆資料指定顏色
+        df2$color <- colors[ match(df2[[ "CHR" ]], chr_list) ]
 
-      # 1) build a plotly figure from scratch
-      fig <- plot_ly(
-        type = "scatter", mode = "markers"
-      ) %>%
-        # static background points
-        add_trace(
-          x = nonsig$pos, y = nonsig$logP,
-          marker = list(size = 4, opacity = 0.4),
-          showlegend = FALSE,
-          hoverinfo = "none"
-        ) %>%
-        # interactive significant points
-        add_trace(
-          x = sig$pos, y = sig$logP,
-          marker = list(size = 6),
-          text = sig$tooltip,
-          hoverinfo = "text",
-          showlegend = FALSE
-        ) %>%
-        layout(
-          title = "GWAS Manhattan Plot",
-          xaxis = list(title = "Genomic Position", range = xrange),
-          yaxis = list(title = "-log10(P)", range = yrange),
-          hovermode = "closest",
-          shapes = list(
-            # genome-wide line
-            list(
-              type = "line",
-              xref = "x", x0 = xrange[1], x1 = xrange[2],
-              yref = "y", y0 = input$genomewideline, y1 = input$genomewideline,
-              line = list(color = "red", dash = "dash")
+        # 根據 slider 切分 sig / non-sig
+        thr    <- input$genomewideline
+        sig    <- df2[df2$logP >= thr, ]
+        nonsig <- df2[df2$logP <  thr, ]
+
+        # 繪圖：non-sig 不 hover、sig 可 hover，顏色都用 df2$color
+        fig <- plot_ly(type = "scatter", mode = "markers") %>%
+          # non-significant
+          add_trace(
+            x         = nonsig$pos_cum,
+            y         = nonsig$logP,
+            marker    = list(color = nonsig$color, size = 4, opacity = 0.4),
+            hoverinfo = "none",
+            showlegend= FALSE
+          ) %>%
+          # significant
+          add_trace(
+            x         = sig$pos_cum,
+            y         = sig$logP,
+            marker    = list(color = sig$color, size = 6),
+            text      = sig$tooltip,
+            hoverinfo = "text",
+            showlegend= FALSE
+          ) %>%
+          layout(
+            title = "GWAS Manhattan Plot",
+            xaxis = list(
+              title    = "Chromosome",
+              tickmode = "array",
+              tickvals = axis_df$center,
+              ticktext = axis_df$chr
             ),
-            # suggestive line
-            list(
-              type = "line",
-              xref = "x", x0 = xrange[1], x1 = xrange[2],
-              yref = "y", y0 = input$suggestiveline, y1 = input$suggestiveline,
-              line = list(color = "blue", dash = "dot")
-            )
-          )
-        )
-
-      fig
-    })
-
-    # proxy 更新門檻線
-    observeEvent(c(input$genomewideline, input$suggestiveline), {
-      dat <- base_data()
-      req(dat)
-      xrange <- range(dat$pos, na.rm = TRUE)
-
-      plotlyProxy("manhattan", session) %>%
-        plotlyProxyInvoke("relayout", list(
-          shapes = list(
-            list(
-              type = "line",
-              xref = "x", x0 = xrange[1], x1 = xrange[2],
-              yref = "y", y0 = input$genomewideline, y1 = input$genomewideline,
-              line = list(color = "red", dash = "dash")
+            yaxis = list(
+              title = "-log10(P)",
+              range = c(0, y_max_auto)
             ),
-            list(
-              type = "line",
-              xref = "x", x0 = xrange[1], x1 = xrange[2],
-              yref = "y", y0 = input$suggestiveline, y1 = input$suggestiveline,
-              line = list(color = "blue", dash = "dot")
-            )
+            shapes = list(
+              # genome-wide line
+              list(
+                type = "line", xref = "x",
+                x0   = info$xrange[1], x1 = info$xrange[2],
+                yref = "y",
+                y0   = input$genomewideline,
+                y1   = input$genomewideline,
+                line = list(color = "red", dash = "dash")
+              ),
+              # suggestive line
+              list(
+                type = "line", xref = "x",
+                x0   = info$xrange[1], x1 = info$xrange[2],
+                yref = "y",
+                y0   = input$suggestiveline,
+                y1   = input$suggestiveline,
+                line = list(color = "blue", dash = "dot")
+              )
+            ),
+            hovermode = "closest"
           )
-        ))
-    })
+
+        fig
+      })
 
 
     output$qqplot <- renderPlot({
