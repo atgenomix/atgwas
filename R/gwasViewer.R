@@ -104,8 +104,8 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
 
  
         chr_list <- axis_df$chr
-        palette_25 <- rainbow(25)
-        colors     <- palette_25[1:length(chr_list)]
+        palette_24 <- rainbow(24)
+        colors     <- palette_24[1:length(chr_list)]
 
         df2$color <- colors[ match(df2[[ "CHR" ]], chr_list) ]
 
