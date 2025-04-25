@@ -40,7 +40,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
           tabPanel("Table", shinycssloaders::withSpinner(DTOutput("table"))),
           tabPanel("QQ Plot", shinycssloaders::withSpinner(plotOutput("qqplot"))),
           tabPanel("Manhattan", 
-                   shinycssloaders::withSpinner(plotlyOutput("manhattan", height = "600px")))
+                   plotlyOutput("manhattan", height = "600px"))
         )
       )
     )
@@ -67,7 +67,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       if ("P" %in% colnames(df)) {
         df <- df[is.finite(df$P) & df$P > 0 & df$P <= 1, ]
       }
-      df[1:10000,]
+      df
     })
     # gwas_data <- reactive({
     #   req(db_info$selected_db())
@@ -108,7 +108,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
     output$manhattan <- renderPlotly({
       dat <- base_data()
       req(dat)
-      dat <- dat[1:50000, ]
+      dat <- dat
 
       # separate sig vs non-sig
       sig    <- dat[dat$logP >= input$genomewideline, ]
@@ -164,7 +164,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
 
     # proxy 更新門檻線
     observeEvent(c(input$genomewideline, input$suggestiveline), {
-      dat <- base_data()[1:50000, ]
+      dat <- base_data()
       req(dat)
       xrange <- range(dat$pos, na.rm = TRUE)
 
