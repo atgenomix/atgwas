@@ -28,16 +28,17 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       sidebarPanel(
         fileInput("file", "Choose GWAS .assoc file",
                   accept = c(".txt", ".assoc", ".assoc.logistic", ".logistic", ".csv")),
-        sliderInput("genomewideline", "Genome-wide threshold (-log10):", min = 0, max = 10,
-                    value = -log10(5e-8), step = 0.1),
-        sliderInput("suggestiveline", "Suggestive threshold (-log10):", min = 0, max = 10,
-                    value = -log10(1e-5), step = 0.1)
+        sliderInput("genomewideline", "Genome-wide threshold (-log10):",
+                    min = 0, max = 10, value = -log10(5e-8), step = 0.1),
+        sliderInput("suggestiveline", "Suggestive threshold (-log10):",
+                    min = 0, max = 10, value = -log10(1e-5), step = 0.1)
       ),
       mainPanel(
         tabsetPanel(
           tabPanel("Table", shinycssloaders::withSpinner(DTOutput("table"))),
           tabPanel("QQ Plot", shinycssloaders::withSpinner(plotOutput("qqplot"))),
-          tabPanel("Manhattan", shinycssloaders::withSpinner(plotlyOutput("manhattan", height = "600px")))
+          tabPanel("Manhattan",
+                   shinycssloaders::withSpinner(plotlyOutput("manhattan", height = "600px")))
         )
       )
     )
@@ -47,7 +48,6 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
     gwas_data <- reactive({
       req(input$file)
       df <- read.table(input$file$datapath, header = TRUE, stringsAsFactors = FALSE)
-
       if ("TEST" %in% colnames(df)) {
         df <- subset(df, TEST == "ADD")
       }
@@ -63,7 +63,6 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
     }, options = list(pageLength = 20))
 
     base_data <- reactiveVal(NULL)
-
     observeEvent(gwas_data(), {
       dat <- gwas_data()
       req(dat$CHR, dat$BP, dat$P)
@@ -84,66 +83,75 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
     output$manhattan <- renderPlotly({
       dat <- base_data()
       req(dat)
-      dat <- dat[1:50000, ]  # reduce rendering load
+      dat <- dat[1:50000, ]
 
-      sig <- dat[dat$logP >= input$genomewideline, ]
+      sig   <- dat[dat$logP >= input$genomewideline, ]
       nonsig <- dat[dat$logP < input$genomewideline, ]
       chr_n <- length(unique(dat$CHR))
       colors <- hue_pal()(chr_n)
 
       p <- ggplot() +
-        geom_point(data = nonsig, aes(x = pos, y = logP, color = as.factor(CHR)), size = 0.5, alpha = 0.4) +
-        geom_point(data = sig, aes(x = pos, y = logP, color = as.factor(CHR), text = tooltip), size = 0.7) +
+        geom_point(data = nonsig,
+                   aes(x = pos, y = logP, color = as.factor(CHR)),
+                   size = 0.5, alpha = 0.4) +
+        geom_point(data = sig,
+                   aes(x = pos, y = logP, color = as.factor(CHR), text = tooltip),
+                   size = 0.7) +
         scale_color_manual(values = colors) +
         theme_minimal() +
         theme(legend.position = "none") +
-        labs(title = "GWAS Manhattan Plot", x = "Genomic Position", y = "-log10(P)")
+        labs(title = "GWAS Manhattan Plot",
+             x = "Genomic Position",
+             y = "-log10(P)")
 
+      xrange <- range(dat$pos, na.rm = TRUE)
       ggplotly(p, tooltip = "text") %>%
         layout(
           hovermode = "closest",
           yaxis = list(range = c(0, max(dat$logP, na.rm = TRUE) * 1.05 + 2)),
-          shapes = list( # Initial threshold lines
+          shapes = list(
             list(
-              type = "line", x0 = 0, x1 = max(dat$pos),
-              y0 = input$genomewideline, y1 = input$genomewideline,
-              line = list(color = "red", dash = "dash")
+              type  = "line",
+              xref  = "x", x0 = xrange[1], x1 = xrange[2],
+              yref  = "y", y0 = input$genomewideline, y1 = input$genomewideline,
+              line  = list(color = "red", dash = "dash")
             ),
             list(
-              type = "line", x0 = 0, x1 = max(dat$pos),
-              y0 = input$suggestiveline, y1 = input$suggestiveline,
-              line = list(color = "blue", dash = "dot")
+              type  = "line",
+              xref  = "x", x0 = xrange[1], x1 = xrange[2],
+              yref  = "y", y0 = input$suggestiveline, y1 = input$suggestiveline,
+              line  = list(color = "blue", dash = "dot")
             )
           )
         )
     })
 
-    # Proxy update threshold lines without redrawing the full plot
     observeEvent(c(input$genomewideline, input$suggestiveline), {
-      dat <- base_data()
+      dat <- base_data()[1:50000, ]
       req(dat)
-      dat <- dat[1:50000, ]
+      xrange <- range(dat$pos, na.rm = TRUE)
       plotlyProxy("manhattan", session) %>%
         plotlyProxyInvoke("relayout", list(
           shapes = list(
             list(
-              type = "line", x0 = 0, x1 = max(dat$pos),
-              y0 = input$genomewideline, y1 = input$genomewideline,
-              line = list(color = "red", dash = "dash")
+              type  = "line",
+              xref  = "x", x0 = xrange[1], x1 = xrange[2],
+              yref  = "y", y0 = input$genomewideline, y1 = input$genomewideline,
+              line  = list(color = "red", dash = "dash")
             ),
             list(
-              type = "line", x0 = 0, x1 = max(dat$pos),
-              y0 = input$suggestiveline, y1 = input$suggestiveline,
-              line = list(color = "blue", dash = "dot")
+              type  = "line",
+              xref  = "x", x0 = xrange[1], x1 = xrange[2],
+              yref  = "y", y0 = input$suggestiveline, y1 = input$suggestiveline,
+              line  = list(color = "blue", dash = "dot")
             )
           )
         ))
     })
 
     output$qqplot <- renderPlot({
-      dat <- base_data()
-      req(dat)
-      dat <- dat[1:50000, ]
+      dat <- base_data()[1:50000, ]
+      req(dat$P)
       pvals <- dat$P
       pvals <- pvals[is.finite(pvals) & pvals > 0 & pvals <= 1]
       obs <- -log10(sort(pvals))
@@ -153,8 +161,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         xlab = "Expected -log10(p)",
         ylab = "Observed -log10(p)",
         main = "QQ Plot of GWAS P-values",
-        pch = 19,
-        cex = 0.5,
+        pch = 19, cex = 0.5,
         xlim = range(exp, finite = TRUE),
         ylim = range(obs, finite = TRUE)
       )
