@@ -101,21 +101,19 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
           input$suggestiveline
         ) + 2
 
-        print(y_max_auto )
-        # 取出所有染色體、並指定交替顏色
+ 
         chr_list <- axis_df$chr
         palette_25 <- rainbow(25)
         colors     <- palette_25[1:length(chr_list)]
 
-        # 對每一筆資料指定顏色
         df2$color <- colors[ match(df2[[ "CHR" ]], chr_list) ]
 
-        # 根據 slider 切分 sig / non-sig
+  
         thr    <- input$genomewideline
         sig    <- df2[df2$logP >= thr, ]
         nonsig <- df2[df2$logP <  thr, ]
 
-        # 繪圖：non-sig 不 hover、sig 可 hover，顏色都用 df2$color
+
         fig <- plot_ly(type = "scatter", mode = "markers") %>%
           # non-significant
           add_trace(
