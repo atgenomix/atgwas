@@ -15,7 +15,6 @@
 #' @param version String specifying the Spark version to use (default \code{"3.5"}).
 #' @return Invisibly returns the Shiny application object after launching it with \code{runApp()}.
 #' @export
-
 gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect", version = "3.5") {
   # 如果沒裝過，先：
   # if (!requireNamespace("BiocManager", quietly=TRUE))
@@ -54,7 +53,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
     gwas_data <- reactive({
       req(input$file)
       df <- read.table(input$file$datapath,
-                      header = TRUE, stringsAsFactors = FALSE)
+                       header = TRUE, stringsAsFactors = FALSE)
       if ("TEST" %in% colnames(df)) df <- subset(df, TEST == "ADD")
       if ("P"    %in% colnames(df)) df <- df[is.finite(df$P) & df$P > 0 & df$P <= 1, ]
       df
@@ -75,20 +74,25 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       obs <- -log10(sort(pvals))
       exp <- -log10(ppoints(length(pvals)))
       plot(exp, obs,
-          xlab = "Expected -log10(P)",
-          ylab = "Observed -log10(P)",
-          main = "QQ Plot of GWAS P-values",
-          pch = 19, cex = 0.5,
-          xlim = range(exp, finite = TRUE),
-          ylim = range(obs, finite = TRUE))
+           xlab = "Expected -log10(P)",
+           ylab = "Observed -log10(P)",
+           main = "QQ Plot of GWAS P-values",
+           pch = 19, cex = 0.5,
+           xlim = range(exp, finite = TRUE),
+           ylim = range(obs, finite = TRUE))
       abline(0, 1, col = "red")
     })
 
-    # 4. 用 manhattanly 畫 Interactive Manhattan
+    # 4. Interactive Manhattan：僅對顯著點啟用 hover
     output$manhattan <- renderPlotly({
       dat <- gwas_data()
       req(dat)
-      manhattanly::manhattanly(
+
+      # 由 slider 設定的 -log10 閾值反推 P 閾值
+      thr_p <- 10^(-input$genomewideline)
+
+      # 產生 manhattanly 物件，highlight 參數標記顯著點
+      p <- manhattanly(
         dat,
         chr            = "CHR",
         bp             = "BP",
@@ -97,8 +101,14 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         col            = c("gray30", "gray60"),
         genomewideline = input$genomewideline,
         suggestiveline = input$suggestiveline,
+        highlight      = dat$P < thr_p,
         title          = "Interactive GWAS Manhattan"
       )
+
+      # 把「非顯著」那一層（trace 0）的 hover 關閉
+      p$x$data[[1]]$hoverinfo <- "none"
+
+      p
     })
 
     # 確保即使面板隱藏也持續運作
