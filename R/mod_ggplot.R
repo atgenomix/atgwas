@@ -113,25 +113,83 @@ plot_manhattan_bg <- function(df, chr_col = "CHR", bp_col = "BP", p_col = "P") {
         panel.grid.minor.x = element_blank()
       )
   }
-library(dplyr)
-library(ggplot2)
+
+
+#' @title Prepare Data for GWAS Manhattan Plot
+#' @description Processes a GWAS result data frame to compute cumulative SNP positions, 
+#'              -log10(p-values), and interactive tooltips, as well as axis breaks and plotting ranges 
+#'              for an interactive Manhattan plot.
+#' @param df A data.frame containing GWAS results. Must include columns for chromosome, base‐pair position, and p-value.
+#' @param chr_col A string specifying the name of the chromosome column in `df`. Defaults to `"CHR"`.
+#' @param bp_col A string specifying the name of the base-pair position column in `df`. Defaults to `"BP"`.
+#' @param p_col A string specifying the name of the p-value column in `df`. Defaults to `"P"`.
+#' @return A list with the following components:
+#'   \describe{
+#'     \item{df}{The original data frame augmented with `pos_cum`, `logP`, and `tooltip` columns.}
+#'     \item{axis_df}{A data frame of chromosome centers for x-axis breaks (`chr`, `center`).}
+#'     \item{xrange}{Numeric vector of length 2: the minimum and maximum cumulative positions.}
+#'     \item{yrange}{Numeric vector of length 2: the y-axis plotting range (from 0 to max(logP)*1.05).}
+#'   }
+#' @export
+
+prep_manhattan <- function(df,
+                           chr_col = "CHR",
+                           bp_col  = "BP",
+                           p_col   = "P") {
+  df2 <- df %>% filter(!is.na(.data[[p_col]]))
+  chr_info <- df2 %>%
+    group_by(chr = .data[[chr_col]]) %>%
+    summarise(chr_len = max(.data[[bp_col]]), .groups = "drop") %>%
+    arrange(chr) %>%
+    mutate(cum_start = cumsum(as.numeric(lag(chr_len, default = 0))))
+  df2 <- df2 %>%
+    left_join(chr_info %>% select(chr, cum_start),
+              by = setNames("chr", chr_col)) %>%
+    arrange(.data[[chr_col]], .data[[bp_col]]) %>%
+    mutate(
+      pos_cum = as.numeric(.data[[bp_col]]) + as.numeric(cum_start),
+      logP    = -log10(.data[[p_col]]),
+      tooltip = paste0(
+        "CHR: ", .data[[chr_col]],
+        "<br>BP: ", .data[[bp_col]],
+        "<br>P: ", signif(.data[[p_col]], 3),
+        if ("SNP" %in% names(.)) paste0("<br>SNP: ", .data[["SNP"]]) else ""
+      )
+    )
+  axis_df <- df2 %>%
+    group_by(chr = .data[[chr_col]]) %>%
+    summarise(center = (min(pos_cum) + max(pos_cum)) / 2, .groups = "drop")
+  list(
+    df       = df2,
+    axis_df  = axis_df,
+    xrange   = range(df2$pos_cum, na.rm = TRUE),
+    yrange   = c(0, max(df2$logP, na.rm = TRUE) * 1.05)
+  )
+}
+
+
+
+# library(dplyr)
+# library(ggplot2)
   
 
-assoc <- read.table("/Users/charleschuang/Downloads/output_gwas_results.assoc.logistic", header = TRUE, stringsAsFactors = FALSE)
-manhattan_plot <- plot_manhattan(assoc)
+# assoc <- read.table("/Users/charleschuang/Downloads/output_gwas_results.assoc.logistic", header = TRUE, stringsAsFactors = FALSE)
+# manhattan_plot <- plot_manhattan(assoc)
 
+# manhattan_plot <- prep_manhattan(assoc)
 
-assoc$tooltip <- paste0(
-  "CHR: ", assoc$CHR,
-  "\nBP: ", assoc$BP,
-  "\nP: ", signif(assoc$P, 3),
-  if ("SNP" %in% names(assoc)) paste0("\nSNP: ", assoc$SNP) else ""
-)
-manhattan_plot <- plot_manhattan_bg(assoc)
+ 
 
-print(manhattan_plot)
-ggsave("manhattan_plot.png", manhattan_plot, width = 10, height = 5, dpi = 300)
+# assoc$tooltip <- paste0(
+#   "CHR: ", assoc$CHR,
+#   "\nBP: ", assoc$BP,
+#   "\nP: ", signif(assoc$P, 3),
+#   if ("SNP" %in% names(assoc)) paste0("\nSNP: ", assoc$SNP) else ""
+# )
+# manhattan_plot <- plot_manhattan_bg(assoc)
 
+# print(manhattan_plot)
+# ggsave("manhattan_plot.png", manhattan_plot, width = 10, height = 5, dpi = 300)
 
 
 
