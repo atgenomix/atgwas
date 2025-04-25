@@ -29,11 +29,11 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
     titlePanel("GWAS Viewer"),
     sidebarLayout(
       sidebarPanel(
-        fileInput("file", "Choose GWAS .assoc file",
-          accept = c(".txt", ".assoc", ".assoc.logistic", ".logistic", ".csv")),
+        # fileInput("file", "Choose GWAS .assoc file",
+        #   accept = c(".txt", ".assoc", ".assoc.logistic", ".logistic", ".csv")),
         sliderInput("genomewideline", "Genome-wide threshold (-log10):", min = 0, max = 10, value = -log10(5e-8), step = 0.1),
         sliderInput("suggestiveline", "Suggestive threshold (-log10):", min = 0, max = 10, value = -log10(1e-5), step = 0.1),
-        # dbBrowserUI("dbBrowser1")
+        dbBrowserUI("dbBrowser1")
       ),
       mainPanel(
         tabsetPanel(
@@ -47,39 +47,40 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
   )
 
   server <- function(input, output, session) {
-    # sc <- sparklyr::spark_connect(master = master, method = method, version = version)
-    # db_info <- dbBrowserServer("dbBrowser1", sc)
+    sc <- sparklyr::spark_connect(master = master, method = method, version = version)
+    db_info <- dbBrowserServer("dbBrowser1", sc)
 
-    # session$onSessionEnded(function() {
-    #   if (!is.null(sc)) {
-    #     sparklyr::spark_disconnect(sc)
-    #     message("Spark connection disconnected.")
+    session$onSessionEnded(function() {
+      if (!is.null(sc)) {
+        sparklyr::spark_disconnect(sc)
+        message("Spark connection disconnected.")
+      }
+    })
+
+    # gwas_data <- reactive({
+    #   req(input$file)
+    #   df <- read.table(input$file$datapath, header = TRUE, stringsAsFactors = FALSE)
+
+    #   if ("TEST" %in% colnames(df)) {
+    #     df <- subset(df, TEST == "ADD")
     #   }
+    #   if ("P" %in% colnames(df)) {
+    #     df <- df[is.finite(df$P) & df$P > 0 & df$P <= 1, ]
+    #   }
+    #   df[sample(nrow(df), 100000), ]  
     # })
 
     gwas_data <- reactive({
-      req(input$file)
-      df <- read.table(input$file$datapath, header = TRUE, stringsAsFactors = FALSE)
-
-      if ("TEST" %in% colnames(df)) {
-        df <- subset(df, TEST == "ADD")
-      }
-      if ("P" %in% colnames(df)) {
-        df <- df[is.finite(df$P) & df$P > 0 & df$P <= 1, ]
-      }
-      df[sample(nrow(df), 100000), ]  
+      req(db_info$selected_db())
+      sel_db <- db_info$selected_db()
+      DBI::dbExecute(sc, paste0("USE ", sel_db))
+      tables <- DBI::dbListTables(sc)
+      req(length(tables) > 0, "No tables found in ", sel_db)
+      tbl_name <- tables[1]
+      df <- DBI::dbGetQuery(sc, paste0("SELECT * FROM ", tbl_name))
+      df$P <- as.numeric(df$P)
+      df
     })
-    # gwas_data <- reactive({
-    #   req(db_info$selected_db())
-    #   sel_db <- db_info$selected_db()
-    #   DBI::dbExecute(sc, paste0("USE ", sel_db))
-    #   tables <- DBI::dbListTables(sc)
-    #   req(length(tables) > 0, "No tables found in ", sel_db)
-    #   tbl_name <- tables[1]
-    #   df <- DBI::dbGetQuery(sc, paste0("SELECT * FROM ", tbl_name))
-    #   df$P <- as.numeric(df$P)
-    #   df
-    # })
 
     output$table <- renderDT({
       req(gwas_data())
