@@ -123,8 +123,6 @@ plot_manhattan <- function(df,
 #' # ggsave("manhattan_plot.png", manhattan_plot, width = 10, height = 5, dpi = 300)
 #'
 #' @export
-
-
 prep_manhattan <- function(df,
                            chr_col = "CHR",
                            bp_col  = "BP",
