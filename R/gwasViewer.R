@@ -4,7 +4,9 @@
 #' @import sparklyr
 #' @import DBI
 #' @import shinycssloaders
-#'
+#' @import plotly
+#' @import scales
+#' 
 #' @title ATGWAS
 #' @description
 #' Launches a Shiny application for interactive exploration of GWAS summary results
@@ -16,14 +18,14 @@
 #' @export
 
 gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect", version = "3.5") {
-  library(shiny)
-  library(DT)
-  library(shinycssloaders)
-  library(plotly)
-  library(ggplot2)
-  library(sparklyr)
-  library(DBI)
-  library(scales)
+  # library(shiny)
+  # library(DT)
+  # library(shinycssloaders)
+  # library(plotly)
+  # library(ggplot2)
+  # library(sparklyr)
+  # library(DBI)
+  # library(scales)
 
   ui <- fluidPage(
     titlePanel("GWAS Viewer"),
