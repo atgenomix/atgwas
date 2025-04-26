@@ -18,14 +18,6 @@
 #' @export
 
 gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect", version = "3.5") {
-  # library(shiny)
-  # library(DT)
-  # library(shinycssloaders)
-  # library(plotly)
-  # library(ggplot2)
-  # library(sparklyr)
-  # library(DBI)
-  # library(scales)
 
   ui <- fluidPage(
     titlePanel("GWAS Viewer"),
