@@ -17,8 +17,6 @@ plot_manhattan <- function(df,
                            p_col    = "P",
                            sig_line = 5e-8,
                            title    = "Manhattan Plot") {
-  library(dplyr)
-  library(ggplot2)
   
   # 1. Filter out rows with missing p-values
   df2 <- df %>%
