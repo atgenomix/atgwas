@@ -3,6 +3,8 @@
 export(dbBrowserServer)
 export(dbBrowserUI)
 export(gwasViewer)
+export(plot_manhattan)
+export(prep_manhattan)
 export(sparkConnectionServer)
 export(sparkConnectionUI)
 import(DBI)
