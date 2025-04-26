@@ -44,25 +44,25 @@ res <- prep_manhattan(df_example)
 str(res)
 
 # Real GWAS dataset example
-# assoc <- read.table("output_gwas_results.assoc.logistic",
-#                     header = TRUE, stringsAsFactors = FALSE)
+assoc <- read.table("output_gwas_results.assoc.logistic",
+                    header = TRUE, stringsAsFactors = FALSE)
 
 # Prepare tooltip
-# assoc$tooltip <- paste0(
-#   "CHR: ", assoc$CHR,
-#   "\\nBP: ", assoc$BP,
-#   "\\nP: ", signif(assoc$P, 3),
-#   if ("SNP" \%in\% names(assoc)) paste0("\\nSNP: ", assoc$SNP) else ""
-# )
+assoc$tooltip <- paste0(
+  "CHR: ", assoc$CHR,
+  "\\\\nBP: ", assoc$BP,
+  "\\\\nP: ", signif(assoc$P, 3),
+  if ("SNP" \%in\% names(assoc)) paste0("\\\\nSNP: ", assoc$SNP) else ""
+)
 
 # Process cumulative position
-# manhattan_data <- prep_manhattan(assoc)
+manhattan_data <- prep_manhattan(assoc)
 
 # Plot using a basic Manhattan plot function
-# manhattan_plot <- plot_manhattan_bg(assoc)
-# print(manhattan_plot)
+manhattan_plot <- plot_manhattan_bg(assoc)
+print(manhattan_plot)
 
 # Save to file
-# ggsave("manhattan_plot.png", manhattan_plot, width = 10, height = 5, dpi = 300)
+ggsave("manhattan_plot.png", manhattan_plot, width = 10, height = 5, dpi = 300)
 
 }
