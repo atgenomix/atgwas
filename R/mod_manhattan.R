@@ -73,21 +73,57 @@ plot_manhattan <- function(df,
 
 
 #' @title Prepare Data for GWAS Manhattan Plot
-#' @description Processes a GWAS result data frame to compute cumulative SNP positions, 
-#'              -log10(p-values), and interactive tooltips, as well as axis breaks and plotting ranges 
-#'              for an interactive Manhattan plot.
-#' @param df A data.frame containing GWAS results. Must include columns for chromosome, base‐pair position, and p-value.
-#' @param chr_col A string specifying the name of the chromosome column in `df`. Defaults to `"CHR"`.
-#' @param bp_col A string specifying the name of the base-pair position column in `df`. Defaults to `"BP"`.
-#' @param p_col A string specifying the name of the p-value column in `df`. Defaults to `"P"`.
-#' @return A list with the following components:
-#'   \describe{
-#'     \item{df}{The original data frame augmented with `pos_cum`, `logP`, and `tooltip` columns.}
-#'     \item{axis_df}{A data frame of chromosome centers for x-axis breaks (`chr`, `center`).}
-#'     \item{xrange}{Numeric vector of length 2: the minimum and maximum cumulative positions.}
-#'     \item{yrange}{Numeric vector of length 2: the y-axis plotting range (from 0 to max(logP)*1.05).}
-#'   }
+#' @description Process a GWAS result data.frame to compute cumulative SNP positions, -log10(p-values),
+#'              and interactive tooltips, as well as x- and y-axis ranges for an interactive Manhattan plot.
+#'
+#' @param df A data.frame containing at least the following columns:
+#'   - CHR: chromosome identifier
+#'   - BP: base-pair position
+#'   - P: p-value
+#' @param chr_col Name of the chromosome column (string). Default: "CHR"
+#' @param bp_col Name of the base-pair position column (string). Default: "BP"
+#' @param p_col  Name of the p-value column (string). Default: "P"
+#'
+#' @return A list with components:
+#'   - df: The input data.frame augmented with `pos_cum`, `logP`, and `tooltip` columns.
+#'   - axis_df: A data.frame of chromosome centers for x-axis breaks (`chr`, `center`).
+#'   - xrange: Numeric vector of length 2 specifying the cumulative position range.
+#'   - yrange: Numeric vector of length 2 specifying the y-axis plotting range.
+#'
+#' @examples
+#' # Synthetic example
+#' df_example <- data.frame(
+#'   CHR = rep(1:3, each = 5),
+#'   BP  = rep(seq(1e6, 5e6, by = 1e6), 3),
+#'   P   = runif(15, 1e-9, 1)
+#' )
+#' res <- prep_manhattan(df_example)
+#' str(res)
+#'
+#' # Real GWAS dataset example
+#' # assoc <- read.table("output_gwas_results.assoc.logistic",
+#' #                     header = TRUE, stringsAsFactors = FALSE)
+#'
+#' # Prepare tooltip
+#' # assoc$tooltip <- paste0(
+#' #   "CHR: ", assoc$CHR,
+#' #   "\\nBP: ", assoc$BP,
+#' #   "\\nP: ", signif(assoc$P, 3),
+#' #   if ("SNP" %in% names(assoc)) paste0("\\nSNP: ", assoc$SNP) else ""
+#' # )
+#'
+#' # Process cumulative position
+#' # manhattan_data <- prep_manhattan(assoc)
+#'
+#' # Plot using a basic Manhattan plot function
+#' # manhattan_plot <- plot_manhattan_bg(assoc)
+#' # print(manhattan_plot)
+#'
+#' # Save to file
+#' # ggsave("manhattan_plot.png", manhattan_plot, width = 10, height = 5, dpi = 300)
+#'
 #' @export
+
 
 prep_manhattan <- function(df,
                            chr_col = "CHR",
@@ -123,31 +159,6 @@ prep_manhattan <- function(df,
     yrange   = c(0, max(df2$logP, na.rm = TRUE) * 1.05)
   )
 }
-
-
-
-# library(dplyr)
-# library(ggplot2)
-  
-
-# assoc <- read.table("/Users/charleschuang/Downloads/output_gwas_results.assoc.logistic", header = TRUE, stringsAsFactors = FALSE)
-# manhattan_plot <- plot_manhattan(assoc)
-
-# manhattan_plot <- prep_manhattan(assoc)
-
- 
-
-# assoc$tooltip <- paste0(
-#   "CHR: ", assoc$CHR,
-#   "\nBP: ", assoc$BP,
-#   "\nP: ", signif(assoc$P, 3),
-#   if ("SNP" %in% names(assoc)) paste0("\nSNP: ", assoc$SNP) else ""
-# )
-# manhattan_plot <- plot_manhattan_bg(assoc)
-
-# print(manhattan_plot)
-# ggsave("manhattan_plot.png", manhattan_plot, width = 10, height = 5, dpi = 300)
-
 
 
 
