@@ -6,6 +6,7 @@
 #' @import shinycssloaders
 #' @import plotly
 #' @import scales
+#' @import dplyr
 #' 
 #' @title ATGWAS
 #' @description
@@ -23,11 +24,11 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
     titlePanel("GWAS Viewer"),
     sidebarLayout(
       sidebarPanel(
-        # fileInput("file", "Choose GWAS .assoc file",
-        #   accept = c(".txt", ".assoc", ".assoc.logistic", ".logistic", ".csv")),
-        sliderInput("genomewideline", "Genome-wide threshold (-log10):", min = -log10(0.05), max = 10, value = -log10(5e-8), step = 0.1),
+        fileInput("file", "Choose GWAS .assoc file",
+          accept = c(".txt", ".assoc", ".assoc.logistic", ".logistic", ".csv")),
+        sliderInput("genomewideline", "Genome-wide threshold (-log10):", min = round(-log10(0.05),4), max = 10, value = -log10(5e-8), step = 0.1),
         #sliderInput("suggestiveline", "Suggestive threshold (-log10):", min = 0, max = 10, value = -log10(1e-5), step = 0.1),
-        dbBrowserUI("dbBrowser1")
+        #dbBrowserUI("dbBrowser1")
       ),
       mainPanel(
         tabsetPanel(
@@ -41,40 +42,40 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
   )
 
   server <- function(input, output, session) {
-    sc <- sparklyr::spark_connect(master = master, method = method, version = version)
-    db_info <- dbBrowserServer("dbBrowser1", sc)
+    # sc <- sparklyr::spark_connect(master = master, method = method, version = version)
+    # db_info <- dbBrowserServer("dbBrowser1", sc)
 
-    session$onSessionEnded(function() {
-      if (!is.null(sc)) {
-        sparklyr::spark_disconnect(sc)
-        message("Spark connection disconnected.")
-      }
-    })
-
-    # gwas_data <- reactive({
-    #   req(input$file)
-    #   df <- read.table(input$file$datapath, header = TRUE, stringsAsFactors = FALSE)
-
-    #   if ("TEST" %in% colnames(df)) {
-    #     df <- subset(df, TEST == "ADD")
+    # session$onSessionEnded(function() {
+    #   if (!is.null(sc)) {
+    #     sparklyr::spark_disconnect(sc)
+    #     message("Spark connection disconnected.")
     #   }
-    #   if ("P" %in% colnames(df)) {
-    #     df <- df[is.finite(df$P) & df$P > 0 & df$P <= 1, ]
-    #   }
-    #   df[sample(nrow(df), 100000), ]  
     # })
 
     gwas_data <- reactive({
-      req(db_info$selected_db())
-      sel_db <- db_info$selected_db()
-      DBI::dbExecute(sc, paste0("USE ", sel_db))
-      tables <- DBI::dbListTables(sc)
-      req(length(tables) > 0, "No tables found in ", sel_db)
-      tbl_name <- tables[1]
-      df <- DBI::dbGetQuery(sc, paste0("SELECT * FROM ", tbl_name))
-      df$P <- as.numeric(df$P)
-      df
+      req(input$file)
+      df <- read.table(input$file$datapath, header = TRUE, stringsAsFactors = FALSE)
+
+      if ("TEST" %in% colnames(df)) {
+        df <- subset(df, TEST == "ADD")
+      }
+      if ("P" %in% colnames(df)) {
+        df <- df[is.finite(df$P) & df$P > 0 & df$P <= 1, ]
+      }
+      df 
     })
+
+    # gwas_data <- reactive({
+    #   req(db_info$selected_db())
+    #   sel_db <- db_info$selected_db()
+    #   DBI::dbExecute(sc, paste0("USE ", sel_db))
+    #   tables <- DBI::dbListTables(sc)
+    #   req(length(tables) > 0, "No tables found in ", sel_db)
+    #   tbl_name <- tables[1]
+    #   df <- DBI::dbGetQuery(sc, paste0("SELECT * FROM ", tbl_name))
+    #   df$P <- as.numeric(df$P)
+    #   df
+    # })
 
     output$table <- renderDT({
       req(gwas_data())
@@ -90,7 +91,21 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         info    <- manh_data()
         df2     <- info$df
         axis_df <- info$axis_df
-        locked_thr <- -log10(0.05)
+        locked_thr <- round(-log10(0.05),4)
+
+
+        # sig_all     <- df2 %>% filter(P <= 0.05)
+        # nonsig_all  <- df2 %>% filter(P >  0.05)
+        # nonsig_smpl <- nonsig_all %>%
+        #   dplyr::slice_sample(n = min(50000, nrow(nonsig_all)))
+        # print(dim(sig_all))
+        # print(dim(nonsig_all))
+        # print(dim(nonsig_smpl))
+        #df2_sub <- dplyr::bind_rows(sig_all, nonsig_smpl)
+        # df2_sub <- rbind(sig_all, nonsig_smpl)
+        # print(dim(df2_sub))
+
+        # df2      <- df2_sub
         y_max_auto <- max(
           info$yrange[2], 
           input$genomewideline,
@@ -108,10 +123,12 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
   
         thr    <- input$genomewideline
         sig    <- df2[df2$logP >= thr, ]
+        print(dim(sig))
         nonsig <- df2[df2$logP <  thr, ]
+        print(dim(nonsig))
         nonsig <- nonsig %>%
-                  slice_sample(n = min(50000, nrow(nonsig)))
-
+                  dplyr::slice_sample(n = min(30000, nrow(nonsig)))
+        print(dim(nonsig))
 
         fig <- plot_ly(type = "scatter", mode = "markers") %>%
           # non-significant
