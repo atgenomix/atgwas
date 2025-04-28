@@ -92,7 +92,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         axis_df <- info$axis_df
         y_max_auto <- max(
           info$yrange[2], 
-          input$genomewideline, 
+          input$genomewideline,
           input$suggestiveline
         ) + 2
 
@@ -107,6 +107,8 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         thr    <- input$genomewideline
         sig    <- df2[df2$logP >= thr, ]
         nonsig <- df2[df2$logP <  thr, ]
+        nonsig <- nonsig %>%
+                  slice_sample(n = min(50000, nrow(nonsig)))
 
 
         fig <- plot_ly(type = "scatter", mode = "markers") %>%
