@@ -99,7 +99,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         df2$color <- colors[ match(df2[[ "CHR" ]], chr_list) ]
 
         print(dim(df2))
-
+        df2 <- df2 %>% filter(P < 0.05)
         bg  <- df2 %>% filter(P >  0.001) %>% dplyr::slice_sample(n = min(50000, nrow(.)))
         print("bg")
         print(dim(bg))
