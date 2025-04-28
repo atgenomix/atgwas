@@ -90,10 +90,12 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         info    <- manh_data()
         df2     <- info$df
         axis_df <- info$axis_df
+        locked_thr <- -log10(0.05)
         y_max_auto <- max(
           info$yrange[2], 
           input$genomewideline,
-          input$suggestiveline
+          locked_thr
+          #input$suggestiveline
         ) + 2
 
  
@@ -156,8 +158,8 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
                 type = "line", xref = "x",
                 x0   = info$xrange[1], x1 = info$xrange[2],
                 yref = "y",
-                y0   = input$suggestiveline,
-                y1   = input$suggestiveline,
+                y0   = locked_thr,
+                y1   = locked_thr,
                 line = list(color = "blue", dash = "dot")
               )
             ),
