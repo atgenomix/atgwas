@@ -25,8 +25,8 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       sidebarPanel(
         # fileInput("file", "Choose GWAS .assoc file",
         #   accept = c(".txt", ".assoc", ".assoc.logistic", ".logistic", ".csv")),
-        sliderInput("genomewideline", "Genome-wide threshold (-log10):", min = 0, max = 10, value = -log10(5e-8), step = 0.1),
-        sliderInput("suggestiveline", "Suggestive threshold (-log10):", min = 0, max = 10, value = -log10(1e-5), step = 0.1),
+        sliderInput("genomewideline", "Genome-wide threshold (-log10):", min = -log10(0.05), max = 10, value = -log10(5e-8), step = 0.1),
+        #sliderInput("suggestiveline", "Suggestive threshold (-log10):", min = 0, max = 10, value = -log10(1e-5), step = 0.1),
         dbBrowserUI("dbBrowser1")
       ),
       mainPanel(
