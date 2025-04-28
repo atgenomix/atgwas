@@ -101,7 +101,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
 
         print(dim(df2))
 
-        bg  <- df2 %>% filter(P >  0.001) %>% dplyr::slice_sample(n = min(100000, nrow(.)))
+        bg  <- df2 %>% filter(P >  0.001) %>% dplyr::slice_sample(n = min(50000, nrow(.)))
         print("bg")
         print(dim(bg))
         mid <- df2 %>% filter(P <= 0.001 & P > thr )
@@ -117,18 +117,6 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         print("df2")
         print(dim(df2))
 
-        # sig_all     <- df2 %>% filter(P <= 0.05)
-        # nonsig_all  <- df2 %>% filter(P >  0.05)
-        # nonsig_smpl <- nonsig_all %>%
-        #   dplyr::slice_sample(n = min(50000, nrow(nonsig_all)))
-        # print(dim(sig_all))
-        # print(dim(nonsig_all))
-        # print(dim(nonsig_smpl))
-        #df2_sub <- dplyr::bind_rows(sig_all, nonsig_smpl)
-        # df2_sub <- rbind(sig_all, nonsig_smpl)
-        # print(dim(df2_sub))
-
-        # df2      <- df2_sub
         y_max_auto <- max(
           info$yrange[2], 
           input$genomewideline,
@@ -136,9 +124,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
           #input$suggestiveline
         ) + 2
 
- 
 
-  
         #thr    <- input$genomewideline
         #sig    <- df2[df2$logP >= thr, ]
         #nonsig <- df2[df2$logP <  thr, ]
