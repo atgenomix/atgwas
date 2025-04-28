@@ -26,7 +26,7 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       sidebarPanel(
         fileInput("file", "Choose GWAS .assoc file",
           accept = c(".txt", ".assoc", ".assoc.logistic", ".logistic", ".csv")),
-        sliderInput("genomewideline", "Genome-wide threshold (-log10):", min = round(-log10(0.05),4), max = 10, value = -log10(5e-8), step = 0.1),
+        sliderInput("genomewideline", "Genome-wide threshold (-log10):", min = round(-log10(0.001),4), max = 10, value = -log10(5e-8), step = 0.1),
         #sliderInput("suggestiveline", "Suggestive threshold (-log10):", min = 0, max = 10, value = -log10(1e-5), step = 0.1),
         #dbBrowserUI("dbBrowser1")
       ),
@@ -91,8 +91,31 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         info    <- manh_data()
         df2     <- info$df
         axis_df <- info$axis_df
-        locked_thr <- round(-log10(0.05),4)
+        locked_thr <- round(-log10(0.001),4)
+        thr <- 10**(-input$genomewideline) #pvalue
+        
+        chr_list <- axis_df$chr
+        palette_25 <- rainbow(25)
+        colors     <- palette_25[1:length(chr_list)]
+        df2$color <- colors[ match(df2[[ "CHR" ]], chr_list) ]
 
+        print(dim(df2))
+
+        bg  <- df2 %>% filter(P >  0.001) %>% dplyr::slice_sample(n = min(100000, nrow(.)))
+        print("bg")
+        print(dim(bg))
+        mid <- df2 %>% filter(P <= 0.001 & P > thr )
+        print("mid")
+        print(dim(mid))
+        sig <- df2 %>% filter(P <= thr)
+        print("sig")
+        print(dim(sig))
+        nonsig <- rbind(bg, mid)
+        print("nonsig")
+        print(dim(nonsig))
+        df2 <- rbind(sig, nonsig)
+        print("df2")
+        print(dim(df2))
 
         # sig_all     <- df2 %>% filter(P <= 0.05)
         # nonsig_all  <- df2 %>% filter(P >  0.05)
@@ -114,21 +137,13 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         ) + 2
 
  
-        chr_list <- axis_df$chr
-        palette_24 <- rainbow(24)
-        colors     <- palette_24[1:length(chr_list)]
-
-        df2$color <- colors[ match(df2[[ "CHR" ]], chr_list) ]
 
   
-        thr    <- input$genomewideline
-        sig    <- df2[df2$logP >= thr, ]
-        print(dim(sig))
-        nonsig <- df2[df2$logP <  thr, ]
-        print(dim(nonsig))
-        nonsig <- nonsig %>%
-                  dplyr::slice_sample(n = min(30000, nrow(nonsig)))
-        print(dim(nonsig))
+        #thr    <- input$genomewideline
+        #sig    <- df2[df2$logP >= thr, ]
+        #nonsig <- df2[df2$logP <  thr, ]
+        # nonsig <- nonsig %>%
+        #           dplyr::slice_sample(n = min(30000, nrow(nonsig)))
 
         fig <- plot_ly(type = "scatter", mode = "markers") %>%
           # non-significant
@@ -158,7 +173,8 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
             ),
             yaxis = list(
               title = "-log10(P)",
-              range = c(0, y_max_auto)
+              #range = c(0, y_max_auto)
+              range = c(0, 10)
             ),
             shapes = list(
               # genome-wide line
