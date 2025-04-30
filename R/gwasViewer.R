@@ -31,10 +31,18 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
       ),
       mainPanel(
         tabsetPanel(
-          tabPanel("Table", shinycssloaders::withSpinner(DTOutput("table"))),
-          tabPanel("QQ Plot", shinycssloaders::withSpinner(plotOutput("qqplot"))),
+          
+          tabPanel("Table", 
+                downloadButton("dl_table", "Download CSV", style = "margin-bottom:10px;")
+                shinycssloaders::withSpinner(DTOutput("table"))
+                ),
+          tabPanel("QQ Plot", 
+                downloadButton("dl_qqplot", "Download PNG", style = "margin-bottom:10px;")
+                shinycssloaders::withSpinner(plotOutput("qqplot"))
+                ),
           tabPanel("Manhattan", 
-                   plotlyOutput("manhattan", height = "600px"))
+                plotlyOutput("manhattan", height = "600px")
+                )
         )
       )
     )
@@ -210,6 +218,40 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
 
     outputOptions(output, "manhattan", suspendWhenHidden = FALSE)
     outputOptions(output, "qqplot", suspendWhenHidden = FALSE)
+    
+    ### === Download Handlers ===
+
+    # 1. Table → CSV
+    output$dl_table <- downloadHandler(
+      filename = function() {
+        paste0("gwas_table_", Sys.Date(), ".csv")
+      },
+      content = function(file) {
+        write.csv(gwas_data(), file, row.names = FALSE)
+      }
+    )
+
+    # 2. QQ Plot → PNG
+    output$dl_qqplot <- downloadHandler(
+      filename = function() {
+        paste0("gwas_qqplot_", Sys.Date(), ".png")
+      },
+      content = function(file) {
+        png(file, width=800, height=800, res=150)
+        dat <- gwas_data()
+        pvals <- dat$P
+        pvals <- pvals[is.finite(pvals) & pvals>0 & pvals<=1]
+        obs <- -log10(sort(pvals))
+        exp <- -log10(ppoints(length(pvals)))
+        plot(exp, obs,
+             xlab="Expected -log10(p)",
+             ylab="Observed -log10(p)",
+             main="QQ Plot of GWAS P-values",
+             pch=19, cex=0.5)
+        abline(0,1,col="red")
+        dev.off()
+      }
+    )
   }
 
   shinyApp(ui = ui, server = server)
