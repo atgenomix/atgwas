@@ -10,7 +10,7 @@ dbBrowserUI <- function(id) {
     selectInput(
       inputId = ns("selected_db"),
       label   = "",
-      choices = c("Please Waiting..." = "")
+      choices = c("Loading, please wait..." = "")
     ),
   )
 }
