@@ -33,11 +33,11 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         tabsetPanel(
           
           tabPanel("Table", 
-                downloadButton("dl_table", "Download CSV", style = "margin-bottom:10px;")
+                downloadButton("dl_table", "Download CSV", style = "margin-bottom:10px;"),
                 shinycssloaders::withSpinner(DTOutput("table"))
                 ),
           tabPanel("QQ Plot", 
-                downloadButton("dl_qqplot", "Download PNG", style = "margin-bottom:10px;")
+                downloadButton("dl_qqplot", "Download PNG", style = "margin-bottom:10px;"),
                 shinycssloaders::withSpinner(plotOutput("qqplot"))
                 ),
           tabPanel("Manhattan", 
