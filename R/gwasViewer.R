@@ -131,13 +131,6 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
           #input$suggestiveline
         ) + 2
 
-
-        #thr    <- input$genomewideline
-        #sig    <- df2[df2$logP >= thr, ]
-        #nonsig <- df2[df2$logP <  thr, ]
-        # nonsig <- nonsig %>%
-        #           dplyr::slice_sample(n = min(30000, nrow(nonsig)))
-
         fig <- plot_ly(type = "scatter", mode = "markers") %>%
           # non-significant
           add_trace(
