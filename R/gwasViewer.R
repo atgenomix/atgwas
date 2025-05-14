@@ -109,20 +109,10 @@ gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect
         print(dim(df2))
         df2 <- df2 %>% filter(P < 0.05)
         bg  <- df2 %>% filter(P >  0.001) %>% dplyr::slice_sample(n = min(50000, nrow(.)))
-        print("bg")
-        print(dim(bg))
         mid <- df2 %>% filter(P <= 0.001 & P > thr )
-        print("mid")
-        print(dim(mid))
         sig <- df2 %>% filter(P <= thr)
-        print("sig")
-        print(dim(sig))
         nonsig <- rbind(bg, mid)
-        print("nonsig")
-        print(dim(nonsig))
         df2 <- rbind(sig, nonsig)
-        print("df2")
-        print(dim(df2))
 
         y_max_auto <- max(
           info$yrange[2], 
