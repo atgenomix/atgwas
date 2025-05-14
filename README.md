@@ -75,13 +75,6 @@ Displays p-value inflation/deflation to detect population stratification or bias
 * `plot_manhattan()` — Static ggplot2-based Manhattan plot
 * `prep_manhattan()` — Data preprocessing for Manhattan plot
 
-## 🛠 System Requirements
-
-* **R** ≥ 4.1
-* **Spark** ≥ 3.0
-* Working Spark cluster or local instance
-* Internet connection for package installation
-
 ## 📤 Export Options
 
 * **CSV Download** — Filtered GWAS result table
