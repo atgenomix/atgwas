@@ -101,8 +101,6 @@ Displays p-value inflation/deflation to detect population stratification or bias
 
 This project is licensed under the **Apache License 2.0**.
 
-Copyright 2025 atgenomix, Inc. (Charles Chuang)
-
 See the [LICENSE](./LICENSE) file for details.
 ## 🤝 Acknowledgements
 
