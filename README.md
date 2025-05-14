@@ -1,6 +1,6 @@
-# ATGWAS: Spark-Powered Shiny App for GWAS Visualization
+# gwasViewer: Spark-Powered Shiny App for GWAS Visualization
 
-ATGWAS is an interactive R Shiny application designed for **Genome-Wide Association Study (GWAS)** result exploration. It connects directly to a **Spark-based catalog**, enabling scalable analysis of large GWAS summary statistics.
+gwasViewer is an interactive R Shiny application designed for **Genome-Wide Association Study (GWAS)** result exploration. It connects directly to a **Spark-based catalog**, enabling scalable analysis of large GWAS summary statistics.
 
 ## 🚀 Features
 
