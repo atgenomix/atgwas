@@ -18,8 +18,14 @@
 #' @return Invisibly returns the Shiny application object after launching it with \code{runApp()}.
 #' @export
 
-gwasViewer <- function(master = "sc://172.18.0.1:15002", method = "spark_connect", version = "3.5") {
-
+gwasViewer <- function(master = NULL, method = "spark_connect", version = "3.5") {
+  if (is.null(master)) {
+    if (Sys.getenv("SPARK_CONNECT_ENDPOINT") != "") {
+      master <- Sys.getenv("SPARK_CONNECT_ENDPOINT")
+    } else{
+      master <- "sc://172.18.0.1:15002"
+    }
+  }
   ui <- fluidPage(
     titlePanel("GWAS Viewer"),
     sidebarLayout(
